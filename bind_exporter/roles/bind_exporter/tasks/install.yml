@@ -1,0 +1,48 @@
+---
+- name: Create the bind_exporter group
+  group:
+    name: "{{ bind_exporter_system_group }}"
+    state: present
+    system: true
+
+- name: Create the bind_exporter user
+  user:
+    name: "{{ bind_exporter_system_user }}"
+    groups: "{{ bind_exporter_system_group }}"
+    append: true
+    shell: /usr/sbin/nologin
+    system: true
+    createhome: false
+    home: /
+
+- block:
+    - name: Download bind_exporter binary to local folder
+      become: false
+      get_url:
+        url: "https://github.com/prometheus-community/bind_exporter/releases/download/v{{ bind_exporter_version }}/bind_exporter-{{ bind_exporter_version }}.linux-{{ go_arch }}.tar.gz"
+        dest: "/tmp/bind_exporter-{{ bind_exporter_version }}.linux-{{ go_arch }}.tar.gz"
+      register: _download_binary
+      until: _download_binary is succeeded
+      retries: 5
+      delay: 2
+      delegate_to: localhost
+      check_mode: false
+
+    - name: Unpack bind_exporter binary
+      become: false
+      unarchive:
+        src: "/tmp/bind_exporter-{{ bind_exporter_version }}.linux-{{ go_arch }}.tar.gz"
+        dest: "/tmp"
+        creates: "/tmp/bind_exporter-{{ bind_exporter_version }}.linux-{{ go_arch }}/bind_exporter"
+      delegate_to: localhost
+      check_mode: false
+
+    - name: Propagate bind_exporter binaries
+      copy:
+        src: "/tmp/bind_exporter-{{ bind_exporter_version }}.linux-{{ go_arch }}/bind_exporter"
+        dest: "/usr/local/bin/bind_exporter"
+        mode: 0755
+        owner: root
+        group: root
+      notify: restart bind_exporter
+      when: not ansible_check_mode
