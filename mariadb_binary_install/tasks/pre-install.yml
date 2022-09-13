@@ -1,0 +1,36 @@
+--- 
+- name: create mysql group 
+  group: 
+    name: mysql
+    state: present 
+    system: true
+
+- name: create mysql user 
+  user: 
+    name: mysql
+    groups: mysql 
+    append: true
+    shell: /usr/sbin/nologi
+    system: true 
+    createhome: false
+
+- name: create mysql required  directories # log config pid 
+  file: 
+    path: "{{ item }}"
+    state: directory
+    owner: mysql
+    group: mysql 
+    mode: 0775
+  with_items:
+    - /var/lib/mysql
+    - /var/log/mysql
+    - /var/run/mysqld/
+    - /usr/local/mysql
+
+- name: create mysql config directory 
+  file: 
+    path: /etc/mysql
+    state: directory
+    owner: root
+    group: root
+    mode: 0775

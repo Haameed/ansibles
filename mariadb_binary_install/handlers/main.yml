@@ -1,0 +1,11 @@
+--- 
+- name: restart mariadb
+  become: true
+  systemd:
+    name: mariadb
+    state: restarted
+    enabled: yes
+
+- name: daemon-reload
+  systemd: 
+    daemon_reload: yes

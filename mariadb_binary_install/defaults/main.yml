@@ -1,0 +1,2 @@
+mariadb_version: 10.2.44 
+download_url: "https://archive.mariadb.org//mariadb-{{ mariadb_version }}/bintar-linux-systemd-x86_64/mariadb-{{ mariadb_version }}-linux-systemd-x86_64.tar.gz"

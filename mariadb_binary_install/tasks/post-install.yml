@@ -1,0 +1,40 @@
+--- 
+- name: copy systemd unit
+  copy:
+   src: /usr/local/mysql/support-files/systemd/mariadb.service
+   dest: /etc/systemd/system/mariadb.service
+   owner: root
+   group: root 
+   mode:  0644
+   remote_src: yes
+  
+- name: Edit systemd unit to work in /var/lib/mysql
+  lineinfile:
+    path: /etc/systemd/system/mariadb.service
+    backrefs: yes
+    regexp: '^(ExecStart=.*)$'
+    line: '\1 --datadir=/var/lib/mysql'
+  notify:
+  - daemon-reload
+  - restart mariadb
+
+- name: Create symbolic link to mysql.service  
+  file:
+    src: /etc/systemd/system/mariadb.service
+    dest: /etc/systemd/system/mysql.service
+    state: link
+  notify: daemon-reload
+
+- name: add mysql binary location to path ( root and skel)
+  become: true
+  lineinfile:
+    path: "{{ item }}"
+    line: "export PATH=$PATH:/usr/local/mysql/bin"
+    state: present
+    insertafter: EOF
+  with_items:
+  - /etc/skel/.bashrc
+  - /root/.bashrc
+
+
+

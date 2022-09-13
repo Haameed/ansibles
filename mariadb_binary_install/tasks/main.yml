@@ -1,0 +1,12 @@
+--- 
+- import_tasks: pre-install.yml
+  tags:
+    - install-mariadb-bin
+
+- import_tasks: install.yml
+  tags:
+  - install-mariadb-bin
+
+- import_tasks: post-install.yml
+  tags:
+  - install-mariadb-bin

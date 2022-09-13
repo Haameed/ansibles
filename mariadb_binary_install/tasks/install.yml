@@ -1,0 +1,48 @@
+---
+- name: download binary 
+  get_url: 
+   url: "{{ download_url }}"
+   dest: /tmp
+   mode: 0644 
+   owner: mysql
+   group: mysql 
+  register: _download_binary
+  until: _download_binary is succeeded
+  retries: 5
+  delay: 2
+
+
+- name: Extract binaries 
+  unarchive: 
+    src: "/tmp/mariadb-{{ mariadb_version }}-linux-systemd-x86_64.tar.gz"
+    dest: /usr/local/mysql 
+    owner: mysql 
+    group: mysql 
+    remote_src: yes 
+    extra_opts:
+    - --transform
+    - "s/mariadb-{{ mariadb_version }}-linux-systemd-x86_64//"
+
+- name: Delete archive file 
+  file: 
+    path: "/tmp/mariadb-{{ mariadb_version }}-linux-systemd-x86_64.tar.gz"
+    state: absent 
+
+- name: Copy sample config file 
+  copy: 
+    src: my.cnf 
+    dest: /etc/mysql/my.cnf 
+    owner: root 
+    group: root 
+    mode: 0664
+
+- name: Run the install script 
+  shell: | 
+   /usr/local/mysql/scripts/mysql_install_db --user=mysql --datadir=/var/lib/mysql
+
+- name: install libncurses5 in order to mysql client be able to work 
+  apt: 
+    name: libncurses5 
+    state: present
+    update_cache: yes
+  when: ansible_os_family == 'Debian' or ansible_distribution == 'Ubuntu'
